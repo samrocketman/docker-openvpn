@@ -1,7 +1,9 @@
 FROM alpine as busybox
 SHELL ["/bin/sh", "-exc"]
 RUN \
-  mkdir -p /base/etc /base/bin; \
+  mkdir -p /base/etc /base/bin /base/root /base/tmp /base/var/tmp; \
+  chmod 700 /base/root; \
+  chmod 1777 /base/tmp /base/var/tmp; \
   apk add curl bash openvpn iptables
 
 RUN \
@@ -13,7 +15,9 @@ RUN \
 RUN \
   copy-bin.sh -p /base -l /usr/sbin/openvpn; \
   copy-bin.sh -p /base -l /bin/busybox -L /bin:/sbin:/usr/bin:/usr/sbin; \
-  copy-bin.sh -p /base -l /sbin/$(readlink $(which iptables)) -L /bin:/sbin:/usr/bin:/usr/sbin
+  copy-bin.sh -p /base -l /sbin/$(readlink $(which iptables)) -L /bin:/sbin:/usr/bin:/usr/sbin; \
+  cd /base/sbin; \
+  ln -s ../bin/busybox ip
 
 # init
 RUN \
@@ -33,4 +37,4 @@ FROM scratch
 COPY --from=busybox /base /
 ENV ENV=/etc/profile
 ENTRYPOINT ["/bin/dumb-init", "--"]
-CMD /bin/sh
+CMD ["/bin/sh", "-ec", "mkdir -p /dev/net; [ -e /dev/net/tun ] || mknod /dev/net/tun c 10 200; openvpn --config /server.conf"]
