@@ -30,23 +30,24 @@ case "${1:-start}" in
   start)
     start
     ;;
-  stop)
+  stop|s)
     stop
     ;;
-  restart)
+  restart|r)
     stop || true
     start
     ;;
-  log|logs)
+  log|logs|l)
     shift
     docker logs "$@" openvpn
     ;;
-  llog|llogs)
+  llog|llogs|ll)
     $0 log | less
     ;;
   *)
     echo "ERROR: argument '$1' not supported." >&2
-    echo "Usage: $0 [start|stop|restart|log|llog]" >&2
+    echo "Usage: $0 [start|stop|restart|log|llog|log -f]" >&2
+    echo "Short usage (start no arguments): $0 [s|r|l|ll|l -f]" >&2
     exit 1
     ;;
 esac
