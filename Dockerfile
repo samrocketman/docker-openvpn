@@ -37,4 +37,4 @@ FROM scratch
 COPY --from=busybox /base /
 ENV ENV=/etc/profile
 ENTRYPOINT ["/bin/dumb-init", "--"]
-CMD ["/bin/sh", "-ec", "mkdir -p /dev/net; [ -e /dev/net/tun ] || mknod /dev/net/tun c 10 200; openvpn --config /server.conf"]
+CMD ["/bin/sh", "-ec", "[ -e /dev/net/tun ] || (mkdir -p /dev/net; mknod /dev/net/tun c 10 200; ); openvpn --config /server.conf"]

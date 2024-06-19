@@ -48,11 +48,11 @@ Generate server config.
 
 Start the VPN service:
 
-    ./start.sh
+    ./ovpn.sh start
 
 Stop the VPN service:
 
-    ./stop.sh
+    ./ovpn.sh stop
 
 If you wish to configure a NAT (not implemented, yet) run the following:
 
