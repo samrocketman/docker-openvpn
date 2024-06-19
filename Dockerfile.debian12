@@ -1,0 +1,82 @@
+FROM alpine as busybox
+ARG docs
+SHELL ["/bin/sh", "-exc"]
+# optional shell
+RUN \
+  mkdir -p /base/bin; \
+  if [ "x$docs" = x ]; then exit; fi; \
+  apk add busybox-static; \
+  cp -a /bin/busybox.static /base/bin/; \
+  cd /base/bin/; \
+  ./busybox.static --list | xargs -n1 ln -s busybox.static; \
+  rm -f col less sed nologin
+
+FROM debian:12 as debian
+ARG docs
+
+SHELL ["/bin/bash", "-o", "pipefail", "-exc"]
+
+RUN \
+  apt update; \
+  apt install -y openvpn curl gcc; \
+  if [ ! "x${docs:-}" = x ]; then apt install -y less man; fi
+
+RUN \
+  curl -sSfLo /usr/local/bin/copy-bin.sh https://raw.githubusercontent.com/samrocketman/home/main/bin/copy-bin.sh; \
+  curl -sSfLo /usr/local/bin/download-utilities.sh https://raw.githubusercontent.com/samrocketman/yml-install-files/main/download-utilities.sh; \
+  chmod 755 /usr/local/bin/*.sh; \
+  mkdir -p /base/etc /base/bin
+
+# openvpn server
+RUN \
+  copy-bin.sh -p /base -l /usr/sbin/openvpn
+
+# optional man binaries
+RUN \
+  if [ "x$docs" = x ]; then exit; fi; \
+  copy-bin.sh -p /base -l /usr/bin/man; \
+  copy-bin.sh -p /base -l /usr/libexec/man-db/manconv; \
+  copy-bin.sh -p /base -l /usr/libexec/man-db/zsoelim; \
+  copy-bin.sh -p /base -l /usr/bin/nroff; \
+  copy-bin.sh -p /base -l /usr/bin/tbl; \
+  copy-bin.sh -p /base -l /usr/bin/groff; \
+  copy-bin.sh -p /base -l /usr/bin/troff; \
+  copy-bin.sh -p /base -l /usr/bin/grotty; \
+  copy-bin.sh -p /base -l /usr/bin/col; \
+  copy-bin.sh -p /base -l /usr/bin/sed; \
+  copy-bin.sh -p /base -l /usr/bin/less; \
+  dpkg -L groff-base | grep 'devascii\|tty-char\|tmac\|man.local' | xargs tar c | tar -x -C /base; \
+  dpkg -L ncurses-base | grep lib | sed 's#^/lib#/usr/lib#' | grep '^/[^/]*/[^/]*/' | xargs tar c | tar -xC /base; \
+  rm -rf /base/usr/share/doc/ncurses-base; \
+  (cd /base; tar c lib | tar -xC usr; rm -rf lib; ln -s usr/lib lib); \
+  echo 'export MANPAGER=less' > /base/etc/profile; \
+  grep -v '^#' /etc/manpath.config > /base/etc/manpath.config
+
+# optional documentation
+RUN \
+  if [ "x$docs" = x ]; then exit; fi; \
+  tar -c /usr/share/doc/openvpn | tar -x -C /base; \
+  find usr/share/man -type f -name 'openvpn*' | xargs tar c | tar -x -C /base/
+
+# minimal accounts
+RUN \
+  echo 'root:x:0:0:root:/root:/bin/nologin' >> /base/etc/passwd; \
+  echo 'root:x:0:root' >> /base/etc/group; \
+  echo 'nobody:x:65534:65534:nobody:/:/bin/nologin' >> /base/etc/passwd; \
+  echo 'nobody:x:65534:' >> /base/etc/group
+
+# minimal binaries
+RUN \
+  echo 'int main() { return 1; }' > nologin.c; \
+  gcc -Os -no-pie -static -std=gnu99 -s -Wall -Werror -o base/bin/nologin nologin.c; \
+  mkdir scratch; \
+  curl -sSfL https://raw.githubusercontent.com/samrocketman/yml-install-files/main/download-utilities.yml | \
+  download-utilities.sh - dumb-init; \
+  mv scratch/dumb-init /base/bin/
+
+FROM scratch
+COPY --from=busybox /base /
+COPY --from=debian /base /
+ENV ENV=/etc/profile
+ENTRYPOINT ["/bin/dumb-init", "--"]
+CMD /bin/sh

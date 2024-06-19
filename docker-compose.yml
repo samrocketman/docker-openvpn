@@ -1,0 +1,14 @@
+version: '2.2'
+volumes:
+  openvpn-data:
+services:
+  openvpn:
+    cap_add:
+     - NET_ADMIN
+    image: kylemanna/openvpn
+    init: true
+    ports:
+     - "1194:1194/udp"
+    restart: always
+    volumes:
+     - openvpn-data:/etc/openvpn
