@@ -70,4 +70,5 @@ docker run \
     openvpn-min
 ```
 
+[my_internal_ca]: https://github.com/samrocketman/my_internal_ca
 [upstream]: https://github.com/kylemanna/docker-openvpn
