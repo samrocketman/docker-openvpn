@@ -153,6 +153,15 @@ if [ ! -f dh.pem ]; then
   openssl dhparam -out dh.pem 2048
 fi
 
+if [ ! -f static.key ]; then
+  if ! docker inspect -f . openvpn-min &> /dev/null; then
+    docker build -t openvpn-min .
+  fi
+  docker run --rm openvpn-min \
+    /bin/sh -c \
+      'mkfifo x; cat x & openvpn --genkey secret x' > static.key
+fi
+
 if [ "$config_type" = server ]; then
   ext=conf
 else
