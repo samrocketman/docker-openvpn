@@ -22,8 +22,9 @@ A multiarch minimal distroless openvpn is provided in [Dockerfile](Dockerfile).
 
 Not really requirements:
 
-- docker: you don't need to use the Dockerfile to manage VPN.  You can use this
-  repository to generate your configuration and use it elsewhere without Docker.
+- docker: you don't need to use the Dockerfile to manage OpenVPN.  You can use
+  this repository to generate your OpenVPN server and client configurations.
+  Then, use it elsewhere without Docker.
 
 Router port forwarding: on your raspberry pi the openvpn server will listen on
 port 1194/TCP.  If possible, I suggest port forwarding 1194 -> 443.  By hosting
