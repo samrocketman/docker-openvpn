@@ -6,6 +6,8 @@
 
 set -euo pipefail
 
+myCA="${myCA:-../my_internal_ca/myCA}"
+
 stderr() {
   if [ "$#" -gt 0 ]; then
     echo "$*" >&2
@@ -33,7 +35,7 @@ filter_cert() {
 }
 
 filter_crl() {
-  if [ ! -f ../my_internal_ca/myCA/crl.pem ]; then
+  if [ ! -f "${myCA}"/crl.pem ]; then
     sed -e '/crl\.pem/d' -e '/crl-verify/d'
   else
     cat
@@ -86,16 +88,28 @@ OPTIONS AND ARGUMENTS
 
     -r REMOTE, --remote REMOTE
       Remote IP address or DNS name where the client should attempt to connect.
+    -p PORT, --port PORT
+      Remote port where client should attempt to connect.
 
 EOF
 }
 
+# Replacement for envsubst; substitution via bash
+envsubst() (
+eval "
+cat <<EOF
+$(cat)
+EOF
+"
+)
 
 #
 # MAIN
 #
 config_type=server
 client_remote=noremote
+client_port=1194
+export client_remote client_port
 while [ "$#" -gt 0 ]; do
   case "${1:-}" in
     --server|-s)
@@ -108,6 +122,11 @@ while [ "$#" -gt 0 ]; do
       ;;
     --remote|-r)
       client_remote="$2"
+      shift
+      shift
+      ;;
+    --port|-p)
+      client_port="$2"
       shift
       shift
       ;;
@@ -128,12 +147,6 @@ done
 #
 # ERROR CHECKING
 #
-if [ "$config_type" = client ] && [ "$client_remote" = noremote ]; then
-  stderr 'Must provide --remote option when creating client config.'
-  stderr ''
-  stderr "See also '$0 --help'"
-  exit 1
-fi
 
 if [ "$config_type" = server ]; then
   default_name=openvpn
@@ -141,13 +154,26 @@ else
   default_name=openvpn-client
 fi
 ovpn_cert="${1:-${default_name}}"
-
-if [ ! -f ../my_internal_ca/myCA/certs/"${ovpn_cert}".crt ] || \
-   [ ! -f ../my_internal_ca/myCA/private/"${ovpn_cert}".key ] || \
-   [ ! -f ../my_internal_ca/myCA/certs/myca.crt ]; then
-  missing_files
+if [ "$config_type" = client ]; then
+  if [ "$client_remote" = noremote ]; then
+    stderr 'Must provide --remote option when creating client config.'
+    stderr ''
+    stderr "See also '$0 --help'"
+    exit 1
+  fi
+  if ! openssl x509 -noout -subject -in \
+      "${myCA}"/certs/"${ovpn_cert}".crt | \
+      grep 'CN *= *openvpn-' > /dev/null; then
+    stderr 'ERROR: Certificate name must start with "openvpn-".'
+    exit 1
+  fi
 fi
 
+if [ ! -f "${myCA}"/certs/"${ovpn_cert}".crt ] || \
+   [ ! -f "${myCA}"/private/"${ovpn_cert}".key ] || \
+   [ ! -f "${myCA}"/certs/myca.crt ]; then
+  missing_files
+fi
 
 if [ ! -f dh.pem ]; then
   openssl dhparam -out dh.pem 2048
@@ -173,6 +199,7 @@ fi
 #
 filter_cert < "$config_type".awk-template.conf | \
   filter_crl | \
+  envsubst | \
   substitute_with_awk > openvpn/"${ovpn_cert}"."$ext" &&
     echo Configuration written to openvpn/"${ovpn_cert}"."$ext" ||
     rm openvpn/"${ovpn_cert}"."$ext"
