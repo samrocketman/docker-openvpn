@@ -6,6 +6,8 @@
 
 set -euo pipefail
 
+[ ! -f .env ] || source .env
+
 myCA="${myCA:-../my_internal_ca/myCA}"
 
 stderr() {
@@ -103,12 +105,19 @@ EOF
 "
 )
 
+if type -P gawk &> /dev/null; then
+  awk() { gawk "$@"; }
+fi
+if type -P gsed &> /dev/null; then
+  sed() { gsed "$@"; }
+fi
+
 #
 # MAIN
 #
-config_type=server
-client_remote=noremote
-client_port=1194
+config_type="${config_type:-server}"
+client_remote="${client_remote:-noremote}"
+client_port="${client_port:-1194}"
 export client_remote client_port
 while [ "$#" -gt 0 ]; do
   case "${1:-}" in

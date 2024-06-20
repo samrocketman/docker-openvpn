@@ -4,11 +4,11 @@ RUN \
   mkdir -p /base/etc /base/bin /base/root /base/tmp /base/var/tmp; \
   chmod 700 /base/root; \
   chmod 1777 /base/tmp /base/var/tmp; \
-  apk add curl bash openvpn iptables
+  apk add curl bash openvpn iptables dumb-init; \
+  cp -a /usr/bin/dumb-init /base/bin/dumb-init
 
 RUN \
   curl -sSfLo /usr/local/bin/copy-bin.sh https://raw.githubusercontent.com/samrocketman/home/main/bin/copy-bin.sh; \
-  curl -sSfLo /usr/local/bin/download-utilities.sh https://raw.githubusercontent.com/samrocketman/yml-install-files/main/download-utilities.sh; \
   chmod 755 /usr/local/bin/*.sh
 
 # openvpn server
@@ -20,12 +20,6 @@ RUN \
   cd /base/sbin; \
   ln -s ../bin/busybox ip
 
-# init
-RUN \
-  mkdir scratch; \
-  curl -sSfL https://raw.githubusercontent.com/samrocketman/yml-install-files/main/download-utilities.yml | \
-  download-utilities.sh - dumb-init; \
-  mv scratch/dumb-init /base/bin/
 
 # minimal accounts
 RUN \
