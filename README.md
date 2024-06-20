@@ -53,21 +53,10 @@ Stop the VPN service:
 
     ./ovpn.sh stop
 
-If you wish to configure a NAT (not implemented, yet) run the following:
+Verifying your traffic routing with traceroute.  The first hop should be
+`10.9.8.1`.
 
-```bash
-docker run \
-    --cap-add NET_ADMIN \
-    --rm \
-    -v "$PWD"/openvpn/openvpn.conf:/server.conf \
-    -w / \
-    --name openvpn \
-    --sysctl net.ipv6.conf.all.disable_ipv6=0 \
-    --sysctl net.ipv6.conf.default.forwarding=1 \
-    --sysctl net.ipv6.conf.all.forwarding=1 \
-    -d \
-    openvpn-min
-```
+    sudo traceroute -T -p 80 example.com
 
 [my_internal_ca]: https://github.com/samrocketman/my_internal_ca
 [upstream]: https://github.com/kylemanna/docker-openvpn

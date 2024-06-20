@@ -13,6 +13,10 @@ start() {
       -v "$PWD"/openvpn/openvpn.conf:/server.conf \
       -w / \
       --name openvpn \
+      --sysctl net.ipv6.conf.all.disable_ipv6=0 \
+      --sysctl net.ipv6.conf.default.forwarding=1 \
+      --sysctl net.ipv6.conf.all.forwarding=1 \
+      --sysctl net.ipv4.ip_forward=1 \
       -d \
       openvpn-min
   else

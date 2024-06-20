@@ -15,6 +15,7 @@ RUN \
 RUN \
   copy-bin.sh -p /base -l /usr/sbin/openvpn; \
   copy-bin.sh -p /base -l /bin/busybox -L /bin:/sbin:/usr/bin:/usr/sbin; \
+  apk info -L iptables libxtables libnftnl libmnl | grep -v 'contains:\|^$' | xargs tar c | tar -xC /base; \
   copy-bin.sh -p /base -l /sbin/$(readlink $(which iptables)) -L /bin:/sbin:/usr/bin:/usr/sbin; \
   cd /base/sbin; \
   ln -s ../bin/busybox ip
@@ -37,4 +38,7 @@ FROM scratch
 COPY --from=busybox /base /
 ENV ENV=/etc/profile
 ENTRYPOINT ["/bin/dumb-init", "--"]
-CMD ["/bin/sh", "-ec", "[ -e /dev/net/tun ] || (mkdir -p /dev/net; mknod /dev/net/tun c 10 200; ); openvpn --config /server.conf"]
+CMD [ \
+  "/bin/sh", \
+  "-ec", \
+  "[ -e /dev/net/tun ] || (mkdir -p /dev/net; mknod /dev/net/tun c 10 200; ); iptables -t nat -A POSTROUTING -s 10.9.8.0/24 -o eth0 -j MASQUERADE; openvpn --config /server.conf"]
