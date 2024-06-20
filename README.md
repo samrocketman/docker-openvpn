@@ -18,8 +18,7 @@ already exists?
 The docker-compose file uses [kylemanna/docker-openvpn][upstream].
 
 However, a multiarch minimal distroless openvpn is provided in
-[Dockerfile](Dockerfile).  I also experimented with a Debian Dockerfile but it
-is too complex to be worth using.
+[Dockerfile](Dockerfile).
 
 # Initializing the service for the first time
 
