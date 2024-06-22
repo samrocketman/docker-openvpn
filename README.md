@@ -74,6 +74,7 @@ specifying default options for scripts.
 | --- | --- |
 | `strict_firewall` | Sets `ports_map` to `443:1194` to expose VPN on 443. |
 | `ports_map` | Fully the docker ports mapping.  Default: `1194:1194` |
+| `network_args` | A bash array for Docker networking arguments |
 
 `gen-conf.sh` options in `.env`.
 
@@ -86,6 +87,10 @@ specifying default options for scripts.
 
 Once you have your certificate authority setup, the following `.env`
 configuration will make it a lot easier to setup new clients.
+
+# `.env` recommendations
+
+### Easier client config generation
 
 ```bash
 config_type=client
@@ -102,6 +107,19 @@ with minimal argumements.
     ./gen-conf.sh openvpn-another-device
     # find configuration in openvpn/openvpn-another-device.ovpn
 
+### Connecting to docker compose HA consul and vault
+
+If experimenting with
+[docker-compose-ha-consul-vault-ui][docker-compose-ha-consul-vault-ui], then
+you'll want the following `.env` config for `./ovpn.sh [start|stop|remove]`.
+
+```bash
+network_args=( --network docker-compose-ha-consul-vault-ui_internal --dns 172.16.238.2 )
+strict_firewall=true
+```
+
+If experimenting with
+
 # Password protect openvpn configurations
 
 Before running `client_cert.sh` you can choose to set the `client_password`
@@ -109,5 +127,6 @@ environment variable or add the `-p` or `--password-prompt` option.
 
     ./client_cert.sh -p openvpn-another-device
 
+[docker-compose-ha-consul-vault-ui]: https://github.com/samrocketman/docker-compose-ha-consul-vault-ui
 [my_internal_ca]: https://github.com/samrocketman/my_internal_ca
 [upstream]: https://github.com/kylemanna/docker-openvpn

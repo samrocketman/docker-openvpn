@@ -1,5 +1,6 @@
 #!/bin/bash
 
+declare -a network_args
 [ ! -f .env ] || source .env
 
 start() {
@@ -13,8 +14,11 @@ start() {
     ports_map="${ports_map:-1194:1194}"
   fi
 
-  if [ -z "$(docker network ls -q -f name=openvpn)" ]; then
-    docker network create --driver=bridge --subnet=172.10.9.0/24 openvpn
+  if [ "${#network_args[@]}" -eq 0 ]; then
+    if [ -z "$(docker network ls -q -f name=openvpn)" ]; then
+      docker network create --driver=bridge --subnet=172.10.9.0/24 openvpn
+    fi
+    network_args=( --network openvpn )
   fi
 
   if [ -z "$(docker ps -a -q -f name=openvpn)" ]; then
@@ -25,6 +29,7 @@ start() {
       -v "$PWD"/openvpn/openvpn.conf:/server.conf \
       -w / \
       --name openvpn \
+      "${network_args[@]}" \
       --sysctl net.ipv6.conf.all.disable_ipv6=0 \
       --sysctl net.ipv6.conf.default.forwarding=1 \
       --sysctl net.ipv6.conf.all.forwarding=1 \
@@ -59,7 +64,9 @@ case "${1:-start}" in
     ;;
   remove|rm)
     docker rm -f openvpn
-    docker network rm openvpn
+    if [ "${#network_args[@]}" -eq 0 ]; then
+      docker network rm openvpn
+    fi
     ;;
   log|logs|l)
     shift
