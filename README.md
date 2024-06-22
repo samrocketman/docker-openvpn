@@ -114,8 +114,12 @@ If experimenting with
 you'll want the following `.env` config for `./ovpn.sh [start|stop|remove]`.
 
 ```bash
+# ./ovpn.sh options
 network_args=( --network docker-compose-ha-consul-vault-ui_internal --dns 172.16.238.2 )
 strict_firewall=true
+
+# ./gen-conf.sh options
+custom_dns=( 172.16.238.2 172.16.238.3 )
 ```
 
 If experimenting with
