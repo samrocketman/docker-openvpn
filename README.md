@@ -123,7 +123,7 @@ network_args=(
 strict_firewall=true
 
 # ./gen-conf.sh options
-custom_dns=( 172.16.238.2 172.16.238.3 )
+custom_dns=( 172.16.238.251 172.16.238.252 )
 ```
 
 If experimenting with
