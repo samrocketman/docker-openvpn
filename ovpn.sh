@@ -9,7 +9,7 @@ start() {
   fi
 
   if [ -n "${strict_firewall:-}" ]; then
-    ports_map=443:1194
+    ports_map=443:1194/tcp
   else
     ports_map="${ports_map:-1194:1194}"
   fi
